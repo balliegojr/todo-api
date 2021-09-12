@@ -1,9 +1,10 @@
-#[macro_use] extern crate diesel;
-#[macro_use] extern crate diesel_migrations;
+#[macro_use]
+extern crate diesel;
+#[macro_use]
+extern crate diesel_migrations;
 
-
-use actix_web::{web, App, HttpServer, Responder, HttpResponse };
 use actix_cors::Cors;
+use actix_web::{web, App, HttpResponse, HttpServer, Responder};
 
 use diesel::prelude::*;
 use diesel::r2d2::{self, ConnectionManager};
@@ -28,8 +29,7 @@ async fn main() -> std::io::Result<()> {
         .build(manager)
         .expect("Failed to create connection pool");
 
-    let connection = pool.get()
-        .expect("Failed to run migrations");
+    let connection = pool.get().expect("Failed to run migrations");
     web::block(move || embedded_migrations::run(&connection))
         .await
         .expect("Failed to run migrations");
@@ -40,15 +40,13 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .data(pool.clone())
-            .service(web::scope("/api")
-                .configure(models::router)
-                .wrap(Cors::new()
-                    .max_age(3600)
-                    .finish())
+            .service(
+                web::scope("/api")
+                    .configure(models::router)
+                    .wrap(Cors::permissive().max_age(3600)),
             )
             .route("/health", web::get().to(health_handler))
-            .default_service(web::route().to(|| HttpResponse::NotFound()))
-
+            .default_service(web::route().to(HttpResponse::NotFound))
     })
     .bind(server_address)?
     .run()

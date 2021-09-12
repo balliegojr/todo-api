@@ -1,4 +1,4 @@
-FROM rust:1.45 as build
+FROM rust:1.55 as build
 
 RUN USER=root cargo new --bin todo_api
 WORKDIR /todo_api
